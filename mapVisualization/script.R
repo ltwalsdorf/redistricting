@@ -5,7 +5,7 @@ library(ggplot2)
 map_data <- readRDS("IL_cd_2020_map.rds")
 
 # Sanity check (optional: saves structure info to text file instead of printing)
-sink("output_info.txt")
+sink("mapVisualization/output_info.txt")
 print(map_data)
 sink()
 
@@ -16,4 +16,4 @@ p <- ggplot(map_data) +
   theme_minimal()
 
 # Save to PNG file
-ggsave("output.png", plot = p, width = 8, height = 6, dpi = 300)
+ggsave("mapVisualization/output.png", plot = p, width = 8, height = 6, dpi = 300)
