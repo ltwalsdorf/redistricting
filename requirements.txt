@@ -1,0 +1,5 @@
+geopandas>=0.14
+fiona
+pyproj
+shapely
+rtree
