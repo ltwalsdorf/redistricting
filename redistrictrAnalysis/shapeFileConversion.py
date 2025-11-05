@@ -2,9 +2,8 @@
 """Convert a GeoJSON containing multiple districts into one ESRI Shapefile per district.
 
 Usage example:
-  python scripts/geojson_to_shapefiles.py \
-      redistrictrAnalysis/redistrictrExport.geojson \
-      --outdir output_shapefiles
+  python redistrictrAnalysis/shapeFileConversion.py redistrictrAnalysis/data/redistrictrExport.geojson
+
 
 The script will try to auto-detect a district column (names containing 'dist', 'district', or 'cd').
 You can override with --column.
@@ -88,36 +87,41 @@ def detect_district_column(gdf: gpd.GeoDataFrame) -> Optional[str]:
     return best
 
 
-def write_shapefiles_per_district(in_path: str, out_dir: str, column: Optional[str] = None, guess: bool = True) -> None:
+def write_shapefiles_per_district(in_path: str,
+                                  column: Optional[str] = None,
+                                  guess: bool = True,
+                                  outdir: Optional[str] = None) -> None:
     gdf = gpd.read_file(in_path)
+
+    # derive outdir only if not provided
+    if outdir is None:
+        # remove trailing .geojson (even if uppercase)
+        in_path_without_suffix = re.sub(r'\.geojson$', '', in_path, flags=re.IGNORECASE)
+        outdir = in_path_without_suffix + "_shapefiles"
+
+    # actually create it
+    os.makedirs(outdir, exist_ok=True)
+    print(f"Writing to directory: {os.path.abspath(outdir)}")
 
     if column is None and guess:
         column = detect_district_column(gdf)
-
     if column is None:
         raise ValueError(f"Could not detect a district column automatically. Columns available: {list(gdf.columns)}")
-
     if column not in gdf.columns:
         raise ValueError(f"Specified column '{column}' not found in GeoJSON. Available: {list(gdf.columns)}")
 
-    os.makedirs(out_dir, exist_ok=True)
-
     values = gdf[column].dropna().unique()
-    print(f"Found {len(values)} districts in column '{column}'. Writing to: {out_dir}")
+    print(f"Found {len(values)} districts in column '{column}'.")
 
     for val in values:
         subset = gdf[gdf[column] == val].copy()
         if subset.empty:
             continue
-
-        # sanitize file base name
         safe_val = slugify(val)
         base_name = f"{slugify(column)}_{safe_val}" if safe_val else f"{slugify(column)}_{str(val)}"
 
-        # Ensure DBF-friendly field names
         out_gdf = shorten_fieldnames(subset)
-
-        out_path = os.path.join(out_dir, f"{base_name}.shp")
+        out_path = os.path.join(outdir, f"{base_name}.shp")
         print(f"Writing {len(out_gdf)} features for '{val}' -> {out_path}")
         out_gdf.to_file(out_path, driver='ESRI Shapefile')
 
@@ -132,7 +136,7 @@ def main():
     args = p.parse_args()
 
     try:
-        write_shapefiles_per_district(args.input, args.outdir, column=args.column, guess=args.guess)
+        write_shapefiles_per_district(args.input, column=args.column, guess=args.guess)
     except Exception as e:
         print(f"Error: {e}")
         raise
