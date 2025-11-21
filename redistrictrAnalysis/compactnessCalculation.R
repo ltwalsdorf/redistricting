@@ -3,7 +3,11 @@ library(dplyr)
 library(redistmetrics)
 library(redist)
 
-shp <- st_read("data/illinoisExample.geojson", quiet = TRUE) |>
+fileName <- "example3"
+input <- paste0("data/", fileName, ".geojson")
+output <- paste0("data/", fileName, "_compactness.csv")
+
+shp <- st_read(input, quiet = TRUE) |>
   st_transform(5070)
 
 # Build required zero-indexed adjacency for comp_edges_rem()
@@ -46,4 +50,16 @@ ref <- shp |>
             perim_m = sum(.__perim_m, na.rm = TRUE), .groups = "drop")
 
 out <- left_join(metrics, ref, by = "district")
-readr::write_csv(out, "data/illinoisExample_compactness.csv")
+
+# Add row with average values
+averages <- out %>%
+  summarize(across(-district, ~mean(.x, na.rm = TRUE))) %>%
+  mutate(district = "average", .before = 1)
+
+# Ensure district column is character before binding
+out <- out %>%
+  mutate(district = as.character(district))
+
+# Combine with original data and save
+out <- bind_rows(out, averages)
+readr::write_csv(out, output)
