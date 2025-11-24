@@ -122,6 +122,7 @@ def write_shapefiles_per_district(in_path: str,
 
         out_gdf = subset
         out_path = os.path.join(outdir, f"{base_name}.geojson")
+        out_gdf.set_crs(None, allow_override=True, inplace=True)
         print(f"Writing {len(out_gdf)} features for '{val}' -> {out_path}")
         out_gdf.to_file(out_path, driver='GeoJSON')
 
