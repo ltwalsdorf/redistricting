@@ -2,7 +2,7 @@
 """Convert a GeoJSON containing multiple districts into one ESRI Shapefile per district.
 
 Usage example:
-  python redistrictrAnalysis/shapeFileConversion.py redistrictrAnalysis/data/redistrictrExport.geojson
+  python redistrictrAnalysis/shapeFileConversion.py redistrictrAnalysis/data/example2.geojson
 
 
 The script will try to auto-detect a district column (names containing 'dist', 'district', or 'cd').
@@ -120,11 +120,10 @@ def write_shapefiles_per_district(in_path: str,
         safe_val = slugify(val)
         base_name = f"{slugify(column)}_{safe_val}" if safe_val else f"{slugify(column)}_{str(val)}"
 
-        out_gdf = shorten_fieldnames(subset)
-        out_path = os.path.join(outdir, f"{base_name}.shp")
+        out_gdf = subset
+        out_path = os.path.join(outdir, f"{base_name}.geojson")
         print(f"Writing {len(out_gdf)} features for '{val}' -> {out_path}")
-        out_gdf.to_file(out_path, driver='ESRI Shapefile')
-
+        out_gdf.to_file(out_path, driver='GeoJSON')
 
 def main():
     p = argparse.ArgumentParser(description="Split a GeoJSON into one shapefile per district/value")
