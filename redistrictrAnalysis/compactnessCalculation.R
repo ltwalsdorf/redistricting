@@ -10,9 +10,6 @@ output <- paste0("data/", fileName, "_compactness.csv")
 shp <- st_read(input, quiet = TRUE) |>
   st_transform(5070)
 
-# Build required zero-indexed adjacency for comp_edges_rem()
-adj <- redist.adjacency(shp)
-
 perims <- prep_perims(shp)
 
 metrics <- tibble(
@@ -26,7 +23,6 @@ metrics <- metrics |>
     comp_bc        = comp_bc(plans = shp$districtr, shp = shp),
     comp_box_reock = comp_box_reock(plans = shp$districtr, shp = shp),
     comp_ch        = comp_ch(plans = shp$districtr, shp = shp),
-    comp_edges_rem = comp_edges_rem(plans = shp$districtr, shp = shp, adj = adj),
     # comp_fh        = comp_fh(plans = shp$districtr, shp = shp),
     # comp_frac_kept = comp_frac_kept(plans = shp$districtr, shp = shp),
     # comp_log_st    = comp_log_st(plans = shp$districtr, shp = shp),
@@ -50,11 +46,6 @@ ref <- shp |>
             perim_m = sum(.__perim_m, na.rm = TRUE), .groups = "drop")
 
 out <- left_join(metrics, ref, by = "district")
-
-# Add row with average values
-averages <- out %>%
-  summarize(across(-district, ~mean(.x, na.rm = TRUE))) %>%
-  mutate(district = "average", .before = 1)
 
 # Ensure district column is character before binding
 out <- out %>%
