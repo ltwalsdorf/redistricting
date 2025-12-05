@@ -52,5 +52,4 @@ out <- out %>%
   mutate(district = as.character(district))
 
 # Combine with original data and save
-out <- bind_rows(out, averages)
 readr::write_csv(out, output)
