@@ -45,11 +45,24 @@ ref <- shp |>
   summarize(area_m2 = sum(.__area_m2, na.rm = TRUE),
             perim_m = sum(.__perim_m, na.rm = TRUE), .groups = "drop")
 
-out <- left_join(metrics, ref, by = "district")
+district_geoms <- shp |>
+  group_by(district = districtr) |>
+  summarize(geometry = st_union(geometry), .groups = "drop")
 
-# Ensure district column is character before binding
-out <- out %>%
+# Convert geometry to WKT
+district_geoms <- district_geoms |>
+  mutate(
+    geometry_wkt = st_as_text(geometry)
+  ) |>
+  st_drop_geometry()
+
+# --------------------------------------------
+
+# Combine everything
+out <- metrics |>
+  left_join(ref, by = "district") |>
+  left_join(district_geoms, by = "district") |>
   mutate(district = as.character(district))
 
-# Combine with original data and save
+# Write final CSV
 readr::write_csv(out, output)
