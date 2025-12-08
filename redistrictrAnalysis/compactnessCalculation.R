@@ -3,7 +3,7 @@ library(dplyr)
 library(redistmetrics)
 library(redist)
 
-fileName <- "example3"
+fileName <- "example4"
 input <- paste0("data/", fileName, ".geojson")
 output <- paste0("data/", fileName, "_compactness.csv")
 
